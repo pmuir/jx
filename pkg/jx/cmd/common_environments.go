@@ -324,7 +324,7 @@ func (o *CommonOptions) CreateAddRequirementFn(chartName string, alias string, v
 				err = util.CopyFile(valuesFiles[0], rootValuesFileName)
 				if err != nil {
 					return errors.Wrapf(err, "cannot copy values."+
-						"yaml to chartName directory %s", appDir)
+						"yaml to %s directory %s", chartName, appDir)
 				}
 				if o.Verbose {
 					log.Infof("Writing values file to %s\n", rootValuesFileName)

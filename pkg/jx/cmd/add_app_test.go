@@ -469,7 +469,7 @@ func TestAddAppWithValuesFileForGitOps(t *testing.T) {
 		DevEnv:               testOptions.DevEnv,
 		HelmUpdate:           true, // Flag default when run on CLI
 		ConfigureGitCallback: testOptions.ConfigureGitFn,
-		ValueFiles:           []string{file.Name()},
+		ValuesFiles:          []string{file.Name()},
 	}
 	o.Args = []string{name}
 	err = o.Run()
