@@ -129,6 +129,9 @@ func (o *AddAppOptions) Run() error {
 	if o.Repo == "" {
 		o.Repo = o.DevEnv.Spec.TeamSettings.AppsRepository
 	}
+	if o.Repo == "" {
+		o.Repo = DEFAULT_CHARTMUSEUM_URL
+	}
 	if o.GitOps {
 		msg := "unable to specify --%s when using GitOps for your dev environment"
 		if o.ReleaseName != "" {
@@ -137,7 +140,7 @@ func (o *AddAppOptions) Run() error {
 		if !o.HelmUpdate {
 			return util.InvalidOptionf(optionHelmUpdate, o.HelmUpdate, msg, optionHelmUpdate)
 		}
-		if o.Namespace != "" {
+		if o.Namespace != "" && o.Namespace != kube.DefaultNamespace {
 			return util.InvalidOptionf(optionNamespace, o.Namespace, msg, optionNamespace)
 		}
 		if len(o.SetValues) > 0 {
