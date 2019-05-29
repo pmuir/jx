@@ -202,6 +202,10 @@ func GetModuleRequirements(dir string, gopath string) (map[string]map[string]str
 
 	answer := make(map[string]map[string]string)
 	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(line, "go:") {
+			// Ignore lines that start go: - these are the go tool finding packages etc.
+			continue
+		}
 		parts := strings.Split(line, " ")
 		if len(parts) != 2 {
 			return nil, errors.Errorf("line of go mod graph should be like '<module> <requirement>' but was %s",
