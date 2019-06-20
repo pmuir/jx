@@ -44,14 +44,12 @@ func init() {
 func TestObjectType(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "objectType.test.schema.json", make(map[string]interface{}), false, false,
-			false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for name")
-				console.SendLine("cheese")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "objectType.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for name")
+			console.SendLine("cheese")
+			console.ExpectEOF()
+		}, nil)
 		assert.Equal(r, `nestedObject:
   anotherNestedObject:
     name: cheese
@@ -63,25 +61,22 @@ func TestObjectType(t *testing.T) {
 func TestDescriptionAndTitle(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "descriptionAndTitle.test.schema.json", make(map[string]interface{}),
-			false,
-			false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test explicit question
-				console.ExpectString("What is your name?")
-				console.SendLine("?")
-				// Test explicit description
-				console.ExpectString("Enter your name")
-				console.SendLine("Pete")
-				// Test no description
-				console.ExpectString("What is your address?")
-				console.SendLine("?")
-				// Test no title
-				console.ExpectString("Enter a value for country")
-				console.SendLine("UK")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "descriptionAndTitle.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test explicit question
+			console.ExpectString("What is your name?")
+			console.SendLine("?")
+			// Test explicit description
+			console.ExpectString("Enter your name")
+			console.SendLine("Pete")
+			// Test no description
+			console.ExpectString("What is your address?")
+			console.SendLine("?")
+			// Test no title
+			console.ExpectString("Enter a value for country")
+			console.SendLine("UK")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `address: '?'
 country: UK
@@ -93,16 +88,13 @@ name: Pete
 func TestAutoAcceptDefaultValues(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "autoAcceptDefaultValues.test.schema.json", make(map[string]interface{}),
-			false, false,
-			true, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test explicit question
-				//console.ExpectString("What is your name? John Smith [Automatically accepted default value]")
-				//console.ExpectEOF()
-				// TODO Fix the console test
-			})
+		values, _, err := GenerateValuesAsYaml(r, "autoAcceptDefaultValues.test.schema.json", make(map[string]interface{}), false, false, true, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test explicit question
+			//console.ExpectString("What is your name? John Smith [Automatically accepted default value]")
+			//console.ExpectEOF()
+			// TODO Fix the console test
+		}, nil)
 		assert.Equal(r, `name: John Smith
 `, values)
 		assert.NoError(r, err)
@@ -114,15 +106,12 @@ func TestAcceptExisting(t *testing.T) {
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
 		values, _, err := GenerateValuesAsYaml(r, "acceptExisting.test.schema.json", map[string]interface{}{
 			"name": "John Smith",
-		},
-			false, false,
-			false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test explicit question
-				console.ExpectString("What is your name? John Smith [Automatically accepted existing value]")
-				console.ExpectEOF()
-			})
+		}, false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test explicit question
+			console.ExpectString("What is your name? John Smith [Automatically accepted existing value]")
+			console.ExpectEOF()
+		}, nil)
 		assert.Equal(r, `name: John Smith
 `, values)
 		assert.NoError(r, err)
@@ -134,16 +123,13 @@ func TestAskExisting(t *testing.T) {
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
 		values, _, err := GenerateValuesAsYaml(r, "askExisting.test.schema.json", map[string]interface{}{
 			"name": "John Smith",
-		},
-			true,
-			false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test explicit question
-				console.ExpectString("What is your name? [? for help] (John Smith)")
-				console.SendLine("")
-				console.ExpectEOF()
-			})
+		}, true, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test explicit question
+			console.ExpectString("What is your name? [? for help] (John Smith)")
+			console.SendLine("")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `name: John Smith
 `, values)
@@ -153,21 +139,17 @@ func TestAskExisting(t *testing.T) {
 func TestNoAskAndAutoAcceptDefaultsWithExisting(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "noAskAndAutoAcceptDefaultsWithExisting.test.schema.json",
-			map[string]interface{}{
-				"name":    "John Smith",
-				"country": "UK",
-			},
-			false,
-			true, true, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test explicit question
-				// TODO fix this...
-				//console.ExpectString("What is your name? John Smith [Automatically accepted existing value]")
-				//console.ExpectString("Enter a value for country UK [Automatically accepted default value]")
-				//console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "noAskAndAutoAcceptDefaultsWithExisting.test.schema.json", map[string]interface{}{
+			"name":    "John Smith",
+			"country": "UK",
+		}, false, true, true, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test explicit question
+			// TODO fix this...
+			//console.ExpectString("What is your name? John Smith [Automatically accepted existing value]")
+			//console.ExpectString("Enter a value for country UK [Automatically accepted default value]")
+			//console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `country: UK
 name: John Smith
@@ -178,14 +160,10 @@ name: John Smith
 func TestIgnoreMissingValues(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "ignoreMissingValues.test.schema.json", make(map[string]interface{}),
-			false,
-			true,
-			false, true,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "ignoreMissingValues.test.schema.json", make(map[string]interface{}), false, true, false, true, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `{}
 `, values)
@@ -195,14 +173,10 @@ func TestIgnoreMissingValues(t *testing.T) {
 func TestErrorMissingValues(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "ignoreMissingValues.test.schema.json", make(map[string]interface{}),
-			false,
-			true,
-			false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "ignoreMissingValues.test.schema.json", make(map[string]interface{}), false, true, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectEOF()
+		}, nil)
 		assert.Error(t, err)
 	})
 }
@@ -210,21 +184,19 @@ func TestErrorMissingValues(t *testing.T) {
 func TestDefaultValues(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "defaultValues.test.schema.json", make(map[string]interface{}), false,
-			false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test default value
-				console.ExpectString("Enter a value for stringValue (UK)")
-				console.SendLine("")
-				console.ExpectString("Enter a value for booleanValue (y/N)")
-				console.SendLine("")
-				console.ExpectString("Enter a value for numberValue (123.4)")
-				console.SendLine("")
-				console.ExpectString("Enter a value for integerValue (123)")
-				console.SendLine("")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "defaultValues.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test default value
+			console.ExpectString("Enter a value for stringValue (UK)")
+			console.SendLine("")
+			console.ExpectString("Enter a value for booleanValue (y/N)")
+			console.SendLine("")
+			console.ExpectString("Enter a value for numberValue (123.4)")
+			console.SendLine("")
+			console.ExpectString("Enter a value for integerValue (123)")
+			console.SendLine("")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `booleanValue: false
 integerValue: 123
@@ -237,17 +209,14 @@ stringValue: UK
 func TestConstValues(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "constValues.test.schema.json", make(map[string]interface{}), false,
-			false,
-			false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test default value
-				console.ExpectString("Set stringValue to UK")
-				console.ExpectString("Set booleanValue to false")
-				console.ExpectString("Set numberValue to 123.4")
-				console.ExpectString("Set integerValue to 123")
-			})
+		values, _, err := GenerateValuesAsYaml(r, "constValues.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test default value
+			console.ExpectString("Set stringValue to UK")
+			console.ExpectString("Set booleanValue to false")
+			console.ExpectString("Set numberValue to 123.4")
+			console.ExpectString("Set integerValue to 123")
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `booleanValue: false
 integerValue: 123
@@ -260,23 +229,20 @@ stringValue: UK
 func TestBasicTypesValidation(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "basicTypesValidation.test.schema.json", make(map[string]interface{}), false,
-			false,
-			false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: unable to convert abc to float64")
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("123.1")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("123.1")
-				console.ExpectString("Sorry, your reply was invalid: unable to convert 123.1 to int")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("123")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "basicTypesValidation.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: unable to convert abc to float64")
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("123.1")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("123.1")
+			console.ExpectString("Sorry, your reply was invalid: unable to convert 123.1 to int")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("123")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -284,21 +250,19 @@ func TestBasicTypesValidation(t *testing.T) {
 func TestBasicTypes(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "basicTypes.test.schema.json", make(map[string]interface{}), false, false,
-			false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for booleanValue (y/N)")
-				console.SendLine("Y")
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("123.4")
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("hello")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("123")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "basicTypes.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for booleanValue (y/N)")
+			console.SendLine("Y")
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("123.4")
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("hello")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("123")
+			console.ExpectEOF()
+		}, nil)
 		assert.Equal(r, `booleanValue: true
 integerValue: 123
 nullValue: null
@@ -312,22 +276,21 @@ stringValue: hello
 func TestMultipleOf(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "multipleOf.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("11.1")
-				console.ExpectString("Sorry, your reply was invalid: 11.1 cannot be divided by 10")
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("10")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("12")
-				console.ExpectString("Sorry, your reply was invalid: 12 cannot be divided by 20")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("20")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "multipleOf.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("11.1")
+			console.ExpectString("Sorry, your reply was invalid: 11.1 cannot be divided by 10")
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("10")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("12")
+			console.ExpectString("Sorry, your reply was invalid: 12 cannot be divided by 20")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("20")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -335,22 +298,21 @@ func TestMultipleOf(t *testing.T) {
 func TestMaximum(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "maximum.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("11.1")
-				console.ExpectString("Sorry, your reply was invalid: 11.1 is not less than or equal to 10.1")
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("1")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("21")
-				console.ExpectString("Sorry, your reply was invalid: 21 is not less than or equal to 20")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("2")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "maximum.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("11.1")
+			console.ExpectString("Sorry, your reply was invalid: 11.1 is not less than or equal to 10.1")
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("1")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("21")
+			console.ExpectString("Sorry, your reply was invalid: 21 is not less than or equal to 20")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("2")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -358,23 +320,21 @@ func TestMaximum(t *testing.T) {
 func TestExclusiveMaximum(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "exclusiveMaximum.test.schema.json", make(map[string]interface{}), false, false, false,
-			false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("10.1")
-				console.ExpectString("Sorry, your reply was invalid: 10.1 is not less than 10.1")
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("1")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("20")
-				console.ExpectString("Sorry, your reply was invalid: 20 is not less than 20")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("2")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "exclusiveMaximum.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("10.1")
+			console.ExpectString("Sorry, your reply was invalid: 10.1 is not less than 10.1")
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("1")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("20")
+			console.ExpectString("Sorry, your reply was invalid: 20 is not less than 20")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("2")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -382,22 +342,21 @@ func TestExclusiveMaximum(t *testing.T) {
 func TestMinimum(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "minimum.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("9.1")
-				console.ExpectString("Sorry, your reply was invalid: 9.1 is not greater than or equal to 10.1")
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("11")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("19")
-				console.ExpectString("Sorry, your reply was invalid: 19 is not greater than or equal to 20")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("21")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "minimum.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("9.1")
+			console.ExpectString("Sorry, your reply was invalid: 9.1 is not greater than or equal to 10.1")
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("11")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("19")
+			console.ExpectString("Sorry, your reply was invalid: 19 is not greater than or equal to 20")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("21")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -405,23 +364,21 @@ func TestMinimum(t *testing.T) {
 func TestExclusiveMinimum(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "exclusiveMinimum.test.schema.json", make(map[string]interface{}), false, false, false,
-			false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("10.1")
-				console.ExpectString("Sorry, your reply was invalid: 10.1 is not greater than 10.1")
-				console.ExpectString("Enter a value for numberValue")
-				console.SendLine("11")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("20")
-				console.ExpectString("Sorry, your reply was invalid: 20 is not greater than 20")
-				console.ExpectString("Enter a value for integerValue")
-				console.SendLine("21")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "exclusiveMinimum.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("10.1")
+			console.ExpectString("Sorry, your reply was invalid: 10.1 is not greater than 10.1")
+			console.ExpectString("Enter a value for numberValue")
+			console.SendLine("11")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("20")
+			console.ExpectString("Sorry, your reply was invalid: 20 is not greater than 20")
+			console.ExpectString("Enter a value for integerValue")
+			console.SendLine("21")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -429,17 +386,16 @@ func TestExclusiveMinimum(t *testing.T) {
 func TestMaxLength(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "maxLength.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("iamlongerthan10")
-				console.ExpectString("Sorry, your reply was invalid: value is too long. Max length is 10")
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("short")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "maxLength.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("iamlongerthan10")
+			console.ExpectString("Sorry, your reply was invalid: value is too long. Max length is 10")
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("short")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -447,17 +403,16 @@ func TestMaxLength(t *testing.T) {
 func TestMinLength(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "minLength.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("short")
-				console.ExpectString("Sorry, your reply was invalid: value is too short. Min length is 10")
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("iamlongerthan10")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "minLength.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("short")
+			console.ExpectString("Sorry, your reply was invalid: value is too short. Min length is 10")
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("iamlongerthan10")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -465,17 +420,16 @@ func TestMinLength(t *testing.T) {
 func TestPattern(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "pattern.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("HELLO")
-				console.ExpectString("Sorry, your reply was invalid: HELLO does not match [0-9]")
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("123")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "pattern.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("HELLO")
+			console.ExpectString("Sorry, your reply was invalid: HELLO does not match [0-9]")
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("123")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -483,17 +437,16 @@ func TestPattern(t *testing.T) {
 func TestRequired(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "required.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("")
-				console.ExpectString("Sorry, your reply was invalid: Value is required")
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("Hello")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "required.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("")
+			console.ExpectString("Sorry, your reply was invalid: Value is required")
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("Hello")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -501,20 +454,19 @@ func TestRequired(t *testing.T) {
 func TestIfThen(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "ifThenElse.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for enablePersistentStorage")
-				console.SendLine("Y")
-				console.ExpectString("Enter a value for databaseConnectionUrl")
-				console.SendLine("abc")
-				console.ExpectString("Enter a value for databaseUsername")
-				console.SendLine("wensleydale")
-				console.ExpectString("Enter a value for databasePassword")
-				console.SendLine("cranberries")
-				console.ExpectString(" ***********")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "ifThenElse.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for enablePersistentStorage")
+			console.SendLine("Y")
+			console.ExpectString("Enter a value for databaseConnectionUrl")
+			console.SendLine("abc")
+			console.ExpectString("Enter a value for databaseUsername")
+			console.SendLine("wensleydale")
+			console.ExpectString("Enter a value for databasePassword")
+			console.SendLine("cranberries")
+			console.ExpectString(" ***********")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		path := strings.Join([]string{vaultBasePath, "databasePassword"}, "/")
 		assert.Equal(r, fmt.Sprintf(`databaseConnectionUrl: abc
@@ -528,15 +480,14 @@ enablePersistentStorage: true
 func TestIfElse(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "ifThenElse.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for enablePersistentStorage")
-				console.SendLine("N")
-				console.ExpectString("Enter a value for enableInMemoryDB")
-				console.SendLine("N")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "ifThenElse.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for enablePersistentStorage")
+			console.SendLine("N")
+			console.ExpectString("Enter a value for enableInMemoryDB")
+			console.SendLine("N")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `enableInMemoryDB: false
 enablePersistentStorage: false
@@ -547,17 +498,16 @@ enablePersistentStorage: false
 func TestIfElseNested(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "ifThenElseNested.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for enablePersistentStorage")
-				console.SendLine("N")
-				console.ExpectString("Enter a value for enableInMemoryDB")
-				console.SendLine("Y")
-				console.ExpectString("Enter a value for nestedString")
-				console.SendLine("Test")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "ifThenElseNested.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for enablePersistentStorage")
+			console.SendLine("N")
+			console.ExpectString("Enter a value for enableInMemoryDB")
+			console.SendLine("Y")
+			console.ExpectString("Enter a value for nestedString")
+			console.SendLine("Test")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `nestedObject:
   enableInMemoryDB: true
@@ -570,13 +520,12 @@ func TestIfElseNested(t *testing.T) {
 func TestIfElseWithDefaults(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "ifThenElse.test.schema.json", make(map[string]interface{}), false, false, true, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for enablePersistentStorage")
-				console.SendLine("N")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "ifThenElse.test.schema.json", make(map[string]interface{}), false, false, true, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for enablePersistentStorage")
+			console.SendLine("N")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		assert.Equal(r, `enableInMemoryDB: true
 enablePersistentStorage: false
@@ -587,24 +536,23 @@ enablePersistentStorage: false
 func TestAllOf(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "AllOfIf.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for enablePersistentStorage")
-				console.SendLine("Y")
-				console.ExpectString("Enter a value for databaseConnectionUrl")
-				console.SendLine("abc")
-				console.ExpectString("Enter a value for databaseUsername")
-				console.SendLine("wensleydale")
-				console.ExpectString("Enter a value for databasePassword")
-				console.SendLine("cranberries")
-				console.ExpectString(" ***********")
-				console.ExpectString("Enter a value for enableCheese")
-				console.SendLine("Y")
-				console.ExpectString("Enter a value for cheeseType")
-				console.SendLine("Stilton")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "AllOfIf.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for enablePersistentStorage")
+			console.SendLine("Y")
+			console.ExpectString("Enter a value for databaseConnectionUrl")
+			console.SendLine("abc")
+			console.ExpectString("Enter a value for databaseUsername")
+			console.SendLine("wensleydale")
+			console.ExpectString("Enter a value for databasePassword")
+			console.SendLine("cranberries")
+			console.ExpectString(" ***********")
+			console.ExpectString("Enter a value for enableCheese")
+			console.SendLine("Y")
+			console.ExpectString("Enter a value for cheeseType")
+			console.SendLine("Stilton")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		path := strings.Join([]string{vaultBasePath, "databasePassword"}, "/")
 		assert.Equal(r, fmt.Sprintf(`cheeseType: Stilton
@@ -620,24 +568,23 @@ enablePersistentStorage: true
 func TestAllOfThen(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, _, err := GenerateValuesAsYaml(r, "AllOfIf.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				console.ExpectString("Enter a value for enablePersistentStorage")
-				console.SendLine("Y")
-				console.ExpectString("Enter a value for databaseConnectionUrl")
-				console.SendLine("abc")
-				console.ExpectString("Enter a value for databaseUsername")
-				console.SendLine("wensleydale")
-				console.ExpectString("Enter a value for databasePassword")
-				console.SendLine("cranberries")
-				console.ExpectString(" ***********")
-				console.ExpectString("Enter a value for enableCheese")
-				console.SendLine("N")
-				console.ExpectString("Enter a value for iDontLikeCheese")
-				console.SendLine("Y")
-				console.ExpectEOF()
-			})
+		values, _, err := GenerateValuesAsYaml(r, "AllOfIf.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			console.ExpectString("Enter a value for enablePersistentStorage")
+			console.SendLine("Y")
+			console.ExpectString("Enter a value for databaseConnectionUrl")
+			console.SendLine("abc")
+			console.ExpectString("Enter a value for databaseUsername")
+			console.SendLine("wensleydale")
+			console.ExpectString("Enter a value for databasePassword")
+			console.SendLine("cranberries")
+			console.ExpectString(" ***********")
+			console.ExpectString("Enter a value for enableCheese")
+			console.SendLine("N")
+			console.ExpectString("Enter a value for iDontLikeCheese")
+			console.SendLine("Y")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 		path := strings.Join([]string{vaultBasePath, "databasePassword"}, "/")
 		assert.Equal(r, fmt.Sprintf(`databaseConnectionUrl: abc
@@ -653,21 +600,20 @@ iDontLikeCheese: true
 func TestMinProperties(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "minProperties.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("")
-				console.ExpectString("Enter a value for stringValue1")
-				console.SendLine("")
-				console.ExpectString("Sorry, your reply was invalid: nestedObject has less than 1 items, has []")
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("abc")
-				console.ExpectString("Enter a value for stringValue1")
-				console.SendLine("def")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "minProperties.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("")
+			console.ExpectString("Enter a value for stringValue1")
+			console.SendLine("")
+			console.ExpectString("Sorry, your reply was invalid: nestedObject has less than 1 items, has []")
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("abc")
+			console.ExpectString("Enter a value for stringValue1")
+			console.SendLine("def")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -675,22 +621,21 @@ func TestMinProperties(t *testing.T) {
 func TestMaxProperties(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "maxProperties.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("abc")
-				console.ExpectString("Enter a value for stringValue1")
-				console.SendLine("def")
-				console.ExpectString("Sorry, your reply was invalid: nestedObject has more than 1 items, " +
-					"has [stringValue stringValue1]")
-				console.ExpectString("Enter a value for stringValue")
-				console.SendLine("abc")
-				console.ExpectString("Enter a value for stringValue1")
-				console.SendLine("")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "maxProperties.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("abc")
+			console.ExpectString("Enter a value for stringValue1")
+			console.SendLine("def")
+			console.ExpectString("Sorry, your reply was invalid: nestedObject has more than 1 items, " +
+				"has [stringValue stringValue1]")
+			console.ExpectString("Enter a value for stringValue")
+			console.SendLine("abc")
+			console.ExpectString("Enter a value for stringValue1")
+			console.SendLine("")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -698,18 +643,17 @@ func TestMaxProperties(t *testing.T) {
 func TestDateTime(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "dateTime.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for dateTimeValue")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 3339 date-time formatted string, " +
-					"it should be like 2006-01-02T15:04:05Z07:00")
-				console.ExpectString("Enter a value for dateTimeValue")
-				console.SendLine("2006-01-02T15:04:05-07:00")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "dateTime.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for dateTimeValue")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 3339 date-time formatted string, " +
+				"it should be like 2006-01-02T15:04:05Z07:00")
+			console.ExpectString("Enter a value for dateTimeValue")
+			console.SendLine("2006-01-02T15:04:05-07:00")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -717,18 +661,17 @@ func TestDateTime(t *testing.T) {
 func TestDate(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "date.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for dateValue")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 3339 full-date formatted string, " +
-					"it should be like 2006-01-02")
-				console.ExpectString("Enter a value for dateValue")
-				console.SendLine("2006-01-02")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "date.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for dateValue")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 3339 full-date formatted string, " +
+				"it should be like 2006-01-02")
+			console.ExpectString("Enter a value for dateValue")
+			console.SendLine("2006-01-02")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -736,18 +679,17 @@ func TestDate(t *testing.T) {
 func TestTime(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "time.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for timeValue")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 3339 full-time formatted string, " +
-					"it should be like 15:04:05Z07:00")
-				console.ExpectString("Enter a value for timeValue")
-				console.SendLine("15:04:05-07:00")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "time.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for timeValue")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 3339 full-time formatted string, " +
+				"it should be like 15:04:05Z07:00")
+			console.ExpectString("Enter a value for timeValue")
+			console.SendLine("15:04:05-07:00")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -755,15 +697,13 @@ func TestTime(t *testing.T) {
 func TestPassword(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, vaultClient, err := GenerateValuesAsYaml(r, "password.test.schema.json", make(map[string]interface{}), false,
-			false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for passwordValue")
-				console.SendLine("abc")
-				console.ExpectEOF()
-			})
+		values, vaultClient, err := GenerateValuesAsYaml(r, "password.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for passwordValue")
+			console.SendLine("abc")
+			console.ExpectEOF()
+		}, nil)
 		path := strings.Join([]string{vaultBasePath, "passwordValue"}, "/")
 		assert.Equal(r, fmt.Sprintf(`passwordValue: vault:%s:password
 `, path), values)
@@ -777,16 +717,13 @@ func TestPassword(t *testing.T) {
 func TestToken(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		values, vaultClient, err := GenerateValuesAsYaml(r, "token.test.schema.json", make(map[string]interface{}), false,
-			false,
-			false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for tokenValue")
-				console.SendLine("abc")
-				console.ExpectEOF()
-			})
+		values, vaultClient, err := GenerateValuesAsYaml(r, "token.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for tokenValue")
+			console.SendLine("abc")
+			console.ExpectEOF()
+		}, nil)
 		path := strings.Join([]string{vaultBasePath, "tokenValue"}, "/")
 		assert.Equal(r, fmt.Sprintf(`tokenValue: vault:%s:token
 `, path), values)
@@ -809,7 +746,7 @@ func TestGeneratedToken(t *testing.T) {
 				console.ExpectString("Enter a value for tokenValue")
 				console.SendLine("")
 				console.ExpectEOF()
-			})
+			}, nil)
 		path := strings.Join([]string{vaultBasePath, "tokenValue"}, "/")
 		assert.Equal(r, fmt.Sprintf(`tokenValue: vault:%s:token
 `, path), values)
@@ -821,22 +758,44 @@ func TestGeneratedToken(t *testing.T) {
 	})
 }
 
+func TestExistingToken(t *testing.T) {
+	tests.SkipForWindows(t, "go-expect does not work on windows")
+	tests.Retry(t, 1, time.Second*10, func(r *tests.R) {
+		vaultClient := fake.NewFakeVaultClient()
+		path := strings.Join([]string{vaultBasePath, "tokenValue"}, "/")
+		vaultClient.Write(path, map[string]interface{}{
+			"token": "abc",
+		})
+		values, _, err := GenerateValuesAsYaml(r, "token.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for tokenValue *** [Automatically accepted existing value]")
+			console.ExpectEOF()
+		}, vaultClient)
+
+		assert.Equal(r, fmt.Sprintf(`tokenValue: vault:%s:token
+`, path), values)
+		secrets, err := vaultClient.Read(path)
+		assert.NoError(t, err)
+		assert.Equal(r, "abc", secrets["token"])
+		assert.NoError(r, err)
+	})
+}
+
 func TestEmail(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "email.test.schema.json", make(map[string]interface{}), false, false, false,
-			false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for emailValue")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 5322 address, " +
-					"it should be like Barry Gibb <bg@example.com>")
-				console.ExpectString("Enter a value for emailValue")
-				console.SendLine("Maurice Gibb <mg@example.com>")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "email.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for emailValue")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 5322 address, " +
+				"it should be like Barry Gibb <bg@example.com>")
+			console.ExpectString("Enter a value for emailValue")
+			console.SendLine("Maurice Gibb <mg@example.com>")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -844,18 +803,17 @@ func TestEmail(t *testing.T) {
 func TestIdnEmail(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "idnemail.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for emailValue")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 5322 address, " +
-					"it should be like Barry Gibb <bg@example.com>")
-				console.ExpectString("Enter a value for emailValue")
-				console.SendLine("Maurice Gibb <mg@example.com>")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "idnemail.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for emailValue")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 5322 address, " +
+				"it should be like Barry Gibb <bg@example.com>")
+			console.ExpectString("Enter a value for emailValue")
+			console.SendLine("Maurice Gibb <mg@example.com>")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -863,18 +821,17 @@ func TestIdnEmail(t *testing.T) {
 func TestHostname(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "hostname.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for hostnameValue")
-				console.SendLine("*****")
-				console.ExpectString("Sorry, your reply was invalid: ***** is not a RFC 1034 hostname, " +
-					"it should be like example.com")
-				console.ExpectString("Enter a value for hostnameValue")
-				console.SendLine("example.com")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "hostname.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for hostnameValue")
+			console.SendLine("*****")
+			console.ExpectString("Sorry, your reply was invalid: ***** is not a RFC 1034 hostname, " +
+				"it should be like example.com")
+			console.ExpectString("Enter a value for hostnameValue")
+			console.SendLine("example.com")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -882,18 +839,17 @@ func TestHostname(t *testing.T) {
 func TestIdnHostname(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "idnhostname.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for hostnameValue")
-				console.SendLine("*****")
-				console.ExpectString("Sorry, your reply was invalid: ***** is not a RFC 1034 hostname, " +
-					"it should be like example.com")
-				console.ExpectString("Enter a value for hostnameValue")
-				console.SendLine("example.com")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "idnhostname.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for hostnameValue")
+			console.SendLine("*****")
+			console.ExpectString("Sorry, your reply was invalid: ***** is not a RFC 1034 hostname, " +
+				"it should be like example.com")
+			console.ExpectString("Enter a value for hostnameValue")
+			console.SendLine("example.com")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -901,18 +857,17 @@ func TestIdnHostname(t *testing.T) {
 func TestIpv4(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "ipv4.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for ipv4Value")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 2673 IPv4 Address, " +
-					"it should be like 127.0.0.1")
-				console.ExpectString("Enter a value for ipv4Value")
-				console.SendLine("127.0.0.1")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "ipv4.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for ipv4Value")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 2673 IPv4 Address, " +
+				"it should be like 127.0.0.1")
+			console.ExpectString("Enter a value for ipv4Value")
+			console.SendLine("127.0.0.1")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -920,18 +875,17 @@ func TestIpv4(t *testing.T) {
 func TestIpv6(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "ipv6.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for ipv6Value")
-				console.SendLine("abc")
-				console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 4291 IPv6 address, " +
-					"it should be like ::1")
-				console.ExpectString("Enter a value for ipv6Value")
-				console.SendLine("::1")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "ipv6.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for ipv6Value")
+			console.SendLine("abc")
+			console.ExpectString("Sorry, your reply was invalid: abc is not a RFC 4291 IPv6 address, " +
+				"it should be like ::1")
+			console.ExpectString("Enter a value for ipv6Value")
+			console.SendLine("::1")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -939,17 +893,16 @@ func TestIpv6(t *testing.T) {
 func TestUri(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "uri.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for uriValue")
-				console.SendLine("*****")
-				console.ExpectString("Sorry, your reply was invalid: ***** is not a RFC 3986 URI")
-				console.ExpectString("Enter a value for uriValue")
-				console.SendLine("https://example.com")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "uri.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for uriValue")
+			console.SendLine("*****")
+			console.ExpectString("Sorry, your reply was invalid: ***** is not a RFC 3986 URI")
+			console.ExpectString("Enter a value for uriValue")
+			console.SendLine("https://example.com")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -957,17 +910,16 @@ func TestUri(t *testing.T) {
 func TestUriReference(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "uriReference.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for uriReferenceValue")
-				console.SendLine("http$$://foo")
-				console.ExpectString("Sorry, your reply was invalid: http$$://foo is not a RFC 3986 URI reference")
-				console.ExpectString("Enter a value for uriReferenceValue")
-				console.SendLine("../resource.txt")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "uriReference.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for uriReferenceValue")
+			console.SendLine("http$$://foo")
+			console.ExpectString("Sorry, your reply was invalid: http$$://foo is not a RFC 3986 URI reference")
+			console.ExpectString("Enter a value for uriReferenceValue")
+			console.SendLine("../resource.txt")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 	})
 }
@@ -975,31 +927,31 @@ func TestUriReference(t *testing.T) {
 func TestJSONPointer(t *testing.T) {
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 	tests.Retry(t, 5, time.Second*10, func(r *tests.R) {
-		_, _, err := GenerateValuesAsYaml(r, "jsonPointer.test.schema.json", make(map[string]interface{}), false, false, false, false,
-			func(console *tests.ConsoleWrapper, donec chan struct{}) {
-				defer close(donec)
-				// Test boolean type
-				console.ExpectString("Enter a value for jsonPointerValue")
-				console.SendLine("~")
-				console.ExpectString("Sorry, your reply was invalid: ~ is not a RFC 6901 JSON pointer")
-				console.ExpectString("Enter a value for jsonPointerValue")
-				console.SendLine("/abc")
-				console.ExpectEOF()
-			})
+		_, _, err := GenerateValuesAsYaml(r, "jsonPointer.test.schema.json", make(map[string]interface{}), false, false, false, false, func(console *tests.ConsoleWrapper, donec chan struct{}) {
+			defer close(donec)
+			// Test boolean type
+			console.ExpectString("Enter a value for jsonPointerValue")
+			console.SendLine("~")
+			console.ExpectString("Sorry, your reply was invalid: ~ is not a RFC 6901 JSON pointer")
+			console.ExpectString("Enter a value for jsonPointerValue")
+			console.SendLine("/abc")
+			console.ExpectEOF()
+		}, nil)
 		assert.NoError(r, err)
 
 	})
 }
 
-func GenerateValuesAsYaml(r *tests.R, schemaName string, existingValues map[string]interface{},
-	askExisting bool, noAsk bool, autoAcceptDefaults bool, ignoreMissingValues bool, answerQuestions func(
-		console *tests.
-			ConsoleWrapper, donec chan struct{})) (string, vault.Client, error) {
+func GenerateValuesAsYaml(r *tests.R, schemaName string, existingValues map[string]interface{}, askExisting bool, noAsk bool, autoAcceptDefaults bool, ignoreMissingValues bool, answerQuestions func(
+	console *tests.ConsoleWrapper, donec chan struct{}), vaultClient vault.Client) (string, vault.Client, error) {
 
 	//t.Parallel()
 	console := tests.NewTerminal(r, &timeout)
 	defer console.Cleanup()
-	vaultClient := fake.NewFakeVaultClient()
+	if vaultClient == nil {
+		vaultClient = fake.NewFakeVaultClient()
+	}
+
 	options := surveyutils.JSONSchemaOptions{
 		Out:                 console.Out,
 		In:                  console.In,
@@ -1008,7 +960,7 @@ func GenerateValuesAsYaml(r *tests.R, schemaName string, existingValues map[stri
 		AutoAcceptDefaults:  autoAcceptDefaults,
 		NoAsk:               noAsk,
 		IgnoreMissingValues: ignoreMissingValues,
-		VaultClient:         &vaultClient,
+		VaultClient:         vaultClient,
 		VaultBasePath:       vaultBasePath,
 		VaultScheme:         "vault",
 	}
@@ -1028,5 +980,5 @@ func GenerateValuesAsYaml(r *tests.R, schemaName string, existingValues map[stri
 	consoleOut := expect.StripTrailingEmptyLines(console.CurrentState())
 	r.Logf(consoleOut)
 	assert.NoError(r, err)
-	return string(yaml), &vaultClient, runErr
+	return string(yaml), vaultClient, runErr
 }
