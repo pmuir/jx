@@ -792,10 +792,18 @@ func (o *JSONSchemaOptions) handleBasicProperty(name string, prefixes []string, 
 			return errors.Wrapf(err, "error converting result %s to type %s", answer, t.Type)
 		}
 	}
-	if result != nil {
-		// Write the value to the output
-		output.Set(name, result)
+	if result == nil {
+		switch t.Type {
+		case "number", "integer":
+			result = 0
+		case "boolean":
+			result = false
+		default:
+			result = ""
+		}
 	}
+	// Write the value to the output
+	output.Set(name, result)
 	return nil
 }
 
