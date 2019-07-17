@@ -7,7 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jenkins-x/jx/pkg/gits"
+
 	"github.com/jenkins-x/jx/pkg/cmd/helper"
+	"github.com/jenkins-x/jx/pkg/util"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -27,26 +30,33 @@ type StepPRLabelsOptions struct {
 	Dir         string
 	Prefix      string
 	PullRequest string
+	GitURL      string
 }
 
 var (
 	labelLong = templates.LongDesc(`
-		Creates environment variables from the labels in a pull request.
+		Prints out environment variables from the labels in a pull request.
+
+		The pull request number is set using --pr or read from the BRANCH_NAME environment variable (removing the PR-
+		prefix.
 
 		Environment variables are prefixed per default with ` + DefaultPrefix + `.
         You can use the '--prefix' argument to set a different prefix.
     `)
 
 	labelExample = templates.Examples(`
-		# List all labels of a given pull-request
+		# List all labels using the environment variable BRANCH_NAME to determine the PR number 
 		jx step pr labels
 
-		# List all labels of a given pull-request using a custom prefix
-		jx step pr --prefix PRL
+		# List all labels using the environment variable BRANCH_NAME to determine the PR number, running in batch mode 
+		jx step pr labels -b 
 
-		# List all labels of a given pull-request using a custom pull-request number
-		jx step pr --pr PR-34
-		jx step pr --pr 34
+		# List all labels using a custom prefix
+		jx step pr labels -b --prefix PRL
+
+		# List all labels specifying the pull request number
+		jx step pr labels -b --pr PR-34
+		jx step pr labels -b --pr 34
 
     `)
 )
@@ -70,11 +80,14 @@ func NewCmdStepPRLabels(commonOpts *opts.CommonOptions) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&options.PullRequest, "pr", "", "", "Git Pull Request number")
 	cmd.Flags().StringVarP(&options.Prefix, "prefix", "p", "", "Environment variable prefix")
+	cmd.Flags().BoolVarP(&options.BatchMode, opts.OptionBatchMode, "b", false, "Enable batch mode")
+	cmd.Flags().StringVarP(&options.GitURL, "url", "", "", "Specify the url of the git repo, if not set will read the info from the current directory")
 	return cmd
 }
 
 // Run implements the execution
 func (o *StepPRLabelsOptions) Run() error {
+
 	gitInfo, provider, _, err := o.CreateGitProvider(o.Dir)
 	if err != nil {
 		return err
@@ -87,6 +100,10 @@ func (o *StepPRLabelsOptions) Run() error {
 		o.PullRequest = strings.TrimPrefix(os.Getenv("BRANCH_NAME"), "PR-")
 	}
 
+	if o.PullRequest == "" {
+		return util.MissingOption("pr")
+	}
+
 	if o.Prefix == "" {
 		o.Prefix = DefaultPrefix
 	}
@@ -94,6 +111,13 @@ func (o *StepPRLabelsOptions) Run() error {
 	prNum, err := strconv.Atoi(o.PullRequest)
 	if err != nil {
 		log.Logger().Warn("Unable to convert PR " + o.PullRequest + " to a number")
+	}
+
+	if o.GitURL != "" {
+		gitInfo, err = gits.ParseGitURL(o.GitURL)
+		if err != nil {
+			return errors.Wrapf(err, "parsing %s", o.GitURL)
+		}
 	}
 
 	pr, err := provider.GetPullRequest(gitInfo.Organisation, gitInfo, prNum)
@@ -108,7 +132,8 @@ func (o *StepPRLabelsOptions) Run() error {
 
 	for _, v := range pr.Labels {
 		envKey := reg.ReplaceAllString(*v.Name, "_")
-		log.Logger().Infof("%v_%v='%v'", o.Prefix, strings.ToUpper(envKey), *v.Name)
+		// Must be fmt.Printf as needs to go stdout
+		fmt.Printf("%v_%v='%v'", o.Prefix, strings.ToUpper(envKey), *v.Name)
 	}
 	return nil
 }
